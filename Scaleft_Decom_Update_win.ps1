@@ -25,18 +25,29 @@
     Version Table:
     Version :: Author             :: Live Date   :: JIRA     :: QC          :: Description
     -----------------------------------------------------------------------------------------------------------
-    1.0     :: Chris Clark        :: 21-September-2018 ::   ::      :: Remove Scaleft and assocated users
+    1.0     :: Chris Clark        :: 27-September-2018 ::   ::      :: Remove Scaleft and assocated users
 #>
 function Get-ScaleftUsers {
     try {
         $ComputerName = $env:computername 
+        #check if the DC memeber or AD controller
+        $Role = (Get-WmiObject Win32_ComputerSystem).domainrole
+        
+        #Role 4 and 5 lists domain controller or backup controller
+        If ($Role -eq 4 -or $Role -eq 5) {
+            $adsi = [ADSI]"Ldap://$Computername"
+            }
+        Else{
+            $adsi = [ADSI]$server = "WinNT://$ComputerName"
+            }
+
         #get list of sft users excluding current
         $sftusers = (Get-WmiObject -Class Win32_UserAccount | Where-Object {$_.name -match "rackspacesft"}).name
         if ($sftusers -eq $Null) {
             Write-Output "No Scaleft Users from $ComputerName"
         }
         Else {
-            [ADSI]$server = "WinNT://$ComputerName"
+            #[ADSI]$server = "WinNT://$ComputerName"
             foreach ($User in $sftusers) {
                 $server.delete("user", $user)}           
             }
