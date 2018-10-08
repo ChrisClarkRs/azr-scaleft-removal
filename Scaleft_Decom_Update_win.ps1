@@ -32,17 +32,18 @@ function Get-ScaleftUsers {
         $ComputerName = $env:computername 
         #check if the DC memeber or AD controller
         $Role = (Get-WmiObject Win32_ComputerSystem).domainrole
+        $adsi = [ADSI]$server = "WinNT://$ComputerName"
         
         #Role 4 and 5 lists domain controller or backup controller
         If ($Role -eq 4 -or $Role -eq 5) {
-            $adsi = [ADSI]"Ldap://$Computername"
+            $sftusers = (Get-WmiObject -Class Win32_UserAccount | Where-Object {$_.name -match "rackspacesft"}).name
             }
         Else{
-            $adsi = [ADSI]$server = "WinNT://$ComputerName"
+            $sftusers = (Get-WmiObject -Class Win32_UserAccount -filter "LocalAccount=True" | Where-Object {$_.name -match "rackspacesft"}).name
             }
 
         #get list of sft users excluding current
-        $sftusers = (Get-WmiObject -Class Win32_UserAccount | Where-Object {$_.name -match "rackspacesft"}).name
+        #$sftusers = (Get-WmiObject -Class Win32_UserAccount -filter "LocalAccount=True" | Where-Object {$_.name -match "rackspacesft"}).name
         if ($sftusers -eq $Null) {
             Write-Output "No Scaleft Users from $ComputerName"
         }
